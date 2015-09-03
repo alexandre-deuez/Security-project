@@ -1,6 +1,6 @@
 <?php
 #########################################################
-#Liste tous les liens présents sur un site internet
+#Liste tous les liens présents sur un site web
 #Auteur : Alexandre Deuez
 #########################################################
 
@@ -23,9 +23,11 @@ for ($i=0;$i<count($siteDataContent);$i++) {
 	}
 }
 
-function ListAllLink($string) {
-$siteDataContent = preg_split('/(<[^>]*[^\/]>)/i', $string, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-$count = 0;
+//Retourne un tableau contenant tous les liens sur la page visitée
+function ListAllLink($website) {
+$siteData = GetWebsiteData($website); //Récupere la page html dans la var $siteData
+$siteDataContent = preg_split('/(<[^>]*[^\/]>)/i', $siteData, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+$linkList = array();
 for ($i=0;$i<count($siteDataContent);$i++) {
 	if (preg_match("/href/i", $siteDataContent[$i])) { 	//Si la chaine "href" est trouvée \b impose une limite à href. Le i rend la recherche insensible à la casse.
 		if (strpos($siteDataContent[$i], "<") == 0)
@@ -35,19 +37,32 @@ for ($i=0;$i<count($siteDataContent);$i++) {
 				$siteDataContent[$i] = str_replace(CHR(32),"",$siteDataContent[$i]); //Supprime tous les espaces de la chaine
 				$relLink = explode("href=\"",$siteDataContent[$i]);
 				$relLink = explode("\"",$relLink[1]);
-				echo htmlspecialchars($relLink[0])."<br>\n";
-				$count++;
+				if (substr($relLink[0], 0, 1) == "/") { //Nous rajoutons l'adresse absolue en cas de liens relatifs
+					$finalLink = $website.$relLink[0];
+					$linkList[] = $finalLink;
+					}
+				elseif (substr($relLink[0], 0, strlen($website)) == $website) { //Test si nous sommes bien sur un lien du site interne.
+					$finalLink = $relLink[0];
+					$linkList[] = $finalLink;
+					}
 				}
 			}
 		}
 	}
-echo "Count : ".$count;
+	return $linkList;
+}
+
+function displayLinks($array) {
+	for ($i=0;$i<count($array);$i++) {
+		echo htmlspecialchars($array[$i])."<br>\n";
+	}
 }
 
 ###### MAIN #####
 
-$targetsite = "http://www.google.fr";
-$siteData = GetWebsiteData($targetsite); //Récupere la page html dans la var $siteData
-ListAllLink($siteData);
+$listLinkTab = array();
+$targetWebSite = "http://www.google.fr";
+$listLinkTab = ListAllLink($targetWebSite);
+displayLinks($listLinkTab);
 
 ?>
