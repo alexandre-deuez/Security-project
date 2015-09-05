@@ -25,25 +25,27 @@ for ($i=0;$i<count($siteDataContent);$i++) {
 
 //Retourne un tableau contenant tous les liens sur la page visitée
 function ListAllLink($website) {
+
 $siteData = GetWebsiteData($website); //Récupere la page html dans la var $siteData
 $siteDataContent = preg_split('/(<[^>]*[^\/]>)/i', $siteData, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-$linkList = array();
 for ($i=0;$i<count($siteDataContent);$i++) {
 	if (preg_match("/href/i", $siteDataContent[$i])) { 	//Si la chaine "href" est trouvée \b impose une limite à href. Le i rend la recherche insensible à la casse.
-		if (strpos($siteDataContent[$i], "<") == 0)
-			{
-			if (strlen(utf8_decode($siteDataContent[$i])) < 200 && strlen(utf8_decode($siteDataContent[$i]))>1) //Filtre les liens trop longs (ou scripts js...) et les liens vides
-				{
+		if (strpos($siteDataContent[$i], "<") == 0) {
+			if (strlen(utf8_decode($siteDataContent[$i])) < 200 && strlen(utf8_decode($siteDataContent[$i]))>1) { //Filtre les liens trop longs (ou scripts js...) et les liens vides
 				$siteDataContent[$i] = str_replace(CHR(32),"",$siteDataContent[$i]); //Supprime tous les espaces de la chaine
 				$relLink = explode("href=\"",$siteDataContent[$i]);
 				$relLink = explode("\"",$relLink[1]);
 				if (substr($relLink[0], 0, 1) == "/") { //Nous rajoutons l'adresse absolue en cas de liens relatifs
-					$finalLink = $website.$relLink[0];
-					$linkList[] = $finalLink;
+					$finalLink = strtolower($website.$relLink[0]);
+					if (!in_array($finalLink, $linkList)){
+						$linkList[] = $finalLink;
+						}
 					}
 				elseif (substr($relLink[0], 0, strlen($website)) == $website) { //Test si nous sommes bien sur un lien du site interne.
-					$finalLink = $relLink[0];
-					$linkList[] = $finalLink;
+					$finalLink = strtolower($relLink[0]);
+					if (!in_array($finalLink, $linkList)) {
+						$linkList[] = $finalLink;
+						}
 					}
 				}
 			}
@@ -58,11 +60,23 @@ function displayLinks($array) {
 	}
 }
 
-###### MAIN #####
+function fuseArray($array1,$array2) {
+for ($i=0;$i<count($array2);$i++) {
+	if (!in_array($array2[$i],$array1)) //Sans doublon
+		 {
+		$array1[] = $array2[$i];
+		}
+	}
+return $array1;
+}
 
-$listLinkTab = array();
-$targetWebSite = "http://www.google.fr";
-$listLinkTab = ListAllLink($targetWebSite);
-displayLinks($listLinkTab);
-
+function checkAllLink($websiteLink) {
+$updatedList = array();
+$updatedList[] = $websiteLink;
+for ($i=0;$i<count($updatedList);$i++) {
+		$checkList[] = $updatedList[$i];
+		$updatedList = fuseArray($updatedList,ListAllLink($updatedList[$i]));
+	}
+return $updatedList;
+}
 ?>
