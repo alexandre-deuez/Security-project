@@ -70,13 +70,31 @@ for ($i=0;$i<count($array2);$i++) {
 return $array1;
 }
 
-function checkAllLink($websiteLink) {
+function searchNewLink($array,$cursor) {
 $updatedList = array();
-$updatedList[] = $websiteLink;
-for ($i=0;$i<count($updatedList);$i++) {
-		$checkList[] = $updatedList[$i];
-		$updatedList = fuseArray($updatedList,ListAllLink($updatedList[$i]));
-	}
+$updatedList = fuseArray($array,ListAllLink($array[$cursor]));
 return $updatedList;
 }
+
+function estimatedProg($cursor,$array) {
+$result = round(($cursor/count($array))*100);
+if ($result > 100){
+	$result = 100;
+	}
+return $result;
+}
+
+function checkDeadLink ($url) {
+
+$a = @get_headers($url);
+if ($a) {//*** On a retour : on test le header HTTP
+	if (strstr($a[0],'404')) {
+		return FALSE; } // Erreur 404
+	else {
+		return TRUE; } // OK
+	}
+else { return FALSE; } // Erreur accès au site
+}
+
+
 ?>
